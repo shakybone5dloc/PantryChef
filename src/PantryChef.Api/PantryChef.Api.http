@@ -1,0 +1,10 @@
+@PantryChef.Api_HostAddress = http://localhost:5149
+
+GET {{PantryChef.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+POST {{host}}.pantry
+Content-Type: application/json
+
+{ "name": "spinach", "quantity": 1, "unit": "bag" }

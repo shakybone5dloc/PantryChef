@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PantryChef.Api/PantryChef.Api.csproj" />
+  </Folder>
+</Solution>
