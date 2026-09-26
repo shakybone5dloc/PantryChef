@@ -1,36 +1,43 @@
-﻿namespace PantryChef.Api.Pantry;
+﻿using Microsoft.EntityFrameworkCore;
+using PantryChef.Api.Data;
 
-public record PantryItem(string Name, decimal Quantity, string Unit);
+namespace PantryChef.Api.Pantry;
+
+public record PantryItemResponse(int Id, string Ingredient, decimal Quantity, string Unit, DateOnly? ExpiresOn);
+public record AddPantryItemRequest(string Ingredient, decimal Quantity, string Unit, DateOnly? ExpiresOn);
 
 public interface IPantryService
 {
-    IReadOnlyList<PantryItem> GetAll();
-    PantryItem Add(PantryItem item);
+    Task<IReadOnlyList<PantryItemResponse>> GetAllAsync(CancellationToken ct);
+    Task<PantryItemResponse> AddAsync(AddPantryItemRequest request, CancellationToken ct);
 }
 
-public sealed class InMemoryPantryService : IPantryService
+public sealed class EfPantryService(PantryDbContext db) : IPantryService
 {
-    private readonly Lock _gate = new();
-    private readonly List<PantryItem> _items =
-    [
-        new("eggs", 12, "count"),
-        new("rice", 2, "lb")
-    ];
-
-    public IReadOnlyList<PantryItem> GetAll()
+    public async Task<IReadOnlyList<PantryItemResponse>> GetAllAsync(CancellationToken ct) =>
+        await db.PantryItems
+            .OrderBy(p => p.Ingredient.Name)
+            .Select(p => new PantryItemResponse(p.Id, p.Ingredient.Name, p.Quantity, p.Unit, p.ExpiresOn))
+            .ToListAsync(ct);
+    public async Task<PantryItemResponse> AddAsync(AddPantryItemRequest request, CancellationToken ct)
     {
-        lock (_gate)
-        {
-            return _items.ToArray();
-        }
-    }
+        var name = request.Ingredient.Trim().ToLowerInvariant();
 
-    public PantryItem Add(PantryItem item)
-    {
-        lock (_gate)
+        var ingredient = await db.Ingredients.SingleOrDefaultAsync(i => i.Name == name, ct)
+            ?? new Ingredient { Name = name };
+
+        var item = new PantryItem
         {
-            _items.Add(item);
-        }
-        return item;
+            Ingredient = ingredient,
+            Quantity = request.Quantity,
+            Unit = request.Unit,
+            ExpiresOn = request.ExpiresOn,
+            AddedAt = DateTimeOffset.UtcNow
+        };
+
+        db.PantryItems.Add(item);
+        await db.SaveChangesAsync(ct);
+
+        return new PantryItemResponse(item.Id, ingredient.Name, item.Quantity, item.Unit, item.ExpiresOn);
     }
 }

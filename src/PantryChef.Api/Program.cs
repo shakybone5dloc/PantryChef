@@ -1,7 +1,9 @@
 using PantryChef.Api.Diagnostics;
 using PantryChef.Api.Pantry;
 using PantryChef.Api.Recipes;
+using PantryChef.Api.Data;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +12,10 @@ builder.Services.AddSingleton<SingletonOp>();
 builder.Services.AddScoped<ScopedOp>();
 builder.Services.AddTransient<TransientOp>();
 builder.Services.AddTransient<LifetimeReporter>();
+builder.Services.AddDbContext<PantryDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("Pantry")));
 
-builder.Services.AddSingleton<IPantryService, InMemoryPantryService>();
+builder.Services.AddScoped<IPantryService, EfPantryService>();
 builder.Services.AddOptions<RecipeOptions>()
     .Bind(builder.Configuration.GetSection(RecipeOptions.SectionName))
     .ValidateDataAnnotations()
@@ -58,12 +62,12 @@ app.MapGet("/debug/lifetimes", (SingletonOp s, ScopedOp sc, TransientOp t, Lifet
     Reporter = reporter.Report()
 });
 
-app.MapGet("/pantry", (IPantryService pantry) => pantry.GetAll());
+app.MapGet("/pantry", (IPantryService pantry, CancellationToken ct) => pantry.GetAllAsync(ct));
 
-app.MapPost("/pantry", (PantryItem item, IPantryService pantry) =>
+app.MapPost("/pantry", async (AddPantryItemRequest request, IPantryService pantry, CancellationToken ct) =>
 {
-    var added = pantry.Add(item);
-    return Results.Created($"/pantry/{added.Name}", added);
+    var added = await pantry.AddAsync(request, ct);
+    return Results.Created($"/pantry/{added.Id}", added);
 });
 
 app.MapGet("/debug/config", (IConfiguration config, IWebHostEnvironment env) => new
