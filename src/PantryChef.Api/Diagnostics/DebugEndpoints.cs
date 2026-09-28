@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using PantryChef.Infrastructure.Data;
-using PantryChef.Api.Recipes;
 
 namespace PantryChef.Api.Diagnostics;
 
@@ -22,13 +20,6 @@ public static class DebugEndpoints
             Endpoint = new { Singleton = s.Id, Scoped = sc.Id, Transient = t.Id },
             Reporter = reporter.Report()
         });
-
-        debug.MapGet("/options", (IOptions<RecipeOptions> o) => new
-        {
-            o.Value.Model, o.Value.MaxSuggestions, ApiKeyConfigured = !string.IsNullOrEmpty(o.Value.ApiKey)
-        });
-
-        debug.MapGet("/options-snapshot", (IOptionsSnapshot<RecipeOptions> o) => new { o.Value.Model, o.Value.MaxSuggestions });
 
         debug.MapGet("/tracking/{id:int}", async (int id, PantryDbContext db) =>
         {

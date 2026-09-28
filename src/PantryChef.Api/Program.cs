@@ -14,20 +14,12 @@ builder.Services.AddValidation();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();    // handlers are tried in order
 builder.Services.AddExceptionHandler<DatabaseExceptionHandler>();
-
-// ---------- Configuration ----------
-builder.Services.AddOptions<RecipeOptions>()
-    .Bind(builder.Configuration.GetSection(RecipeOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
+builder.Services.AddExceptionHandler<RecipeGenerationExceptionHandler>();
 
 // ---------- Layers ----------
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(
-    builder.Configuration.GetConnectionString("Pantry")
-        ?? throw new InvalidOperationException("Connection string 'Pantry' is not configured."));
-
+builder.Services.AddInfrastructure(builder.Configuration);
 // ---------- Lesson demos ----------
 builder.Services.AddSingleton<SingletonOp>();
 builder.Services.AddScoped<ScopedOp>();
@@ -56,5 +48,6 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/", () => "PantryChef is running");
 app.MapPantryEndpoints();
+app.MapRecipeEndpoints();
 
 app.Run();
