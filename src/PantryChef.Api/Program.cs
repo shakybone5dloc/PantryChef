@@ -1,92 +1,58 @@
+using Microsoft.EntityFrameworkCore;
+using PantryChef.Api.Data;
 using PantryChef.Api.Diagnostics;
 using PantryChef.Api.Pantry;
 using PantryChef.Api.Recipes;
-using PantryChef.Api.Data;
-using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// API plumbing
 builder.Services.AddOpenApi();
-builder.Services.AddSingleton<SingletonOp>();
-builder.Services.AddScoped<ScopedOp>();
-builder.Services.AddTransient<TransientOp>();
-builder.Services.AddTransient<LifetimeReporter>();
-builder.Services.AddDbContext<PantryDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("Pantry")));
+builder.Services.AddValidation();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<DatabaseExceptionHandler>();
 
-builder.Services.AddScoped<IPantryService, EfPantryService>();
+// Configuration
 builder.Services.AddOptions<RecipeOptions>()
     .Bind(builder.Configuration.GetSection(RecipeOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+// Data
+builder.Services.AddDbContext<PantryDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("Pantry")));
+builder.Services.AddScoped<IPantryService, EfPantryService>();
+
+// Lesson demos
+builder.Services.AddSingleton<SingletonOp>();
+builder.Services.AddScoped<ScopedOp>();
+builder.Services.AddTransient<TransientOp>();
+builder.Services.AddTransient<LifetimeReporter>();
+
 var app = builder.Build();
 
-// ---- Middleware A (outermost) ----
+// Pipeline
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 app.Use(async (context, next) =>
 {
     var sw = System.Diagnostics.Stopwatch.StartNew();
-    app.Logger.LogInformation("A --> {Method} {Path}", context.Request.Method, context.Request.Path);
-
-    if (context.Request.Path == "/blocked")
-    {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        app.Logger.LogInformation("A <-- short-circuited with 403");
-        return;  // never call next: B and the endpoint don't run
-    }
-
     await next(context);
-
-    app.Logger.LogInformation("A <-- {Status} in {Ms} ms", context.Response.StatusCode, sw.ElapsedMilliseconds);
-});
-
-// ---- Middleware B ----
-app.Use(async (context, next) =>
-{
-    var endpoint = context.GetEndpoint();
-    app.Logger.LogInformation("  B: matched endpoint = {Endpoint}", endpoint?.DisplayName ?? "(none)");
-    await next(context);
+    app.Logger.LogInformation("{Method} {Path} -> {Status} in {Ms} ms",
+        context.Request.Method, context.Request.Path, context.Response.StatusCode, sw.ElapsedMilliseconds);
 });
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
+    app.MapDebugEndpoints();
 }
 
+// Endpoints
 app.MapGet("/", () => "PantryChef is running");
-
-app.MapGet("/debug/lifetimes", (SingletonOp s, ScopedOp sc, TransientOp t, LifetimeReporter reporter) => new
-{
-    Endpoint = new { Singleton = s.Id, Scoped = sc.Id, Transient = t.Id },
-    Reporter = reporter.Report()
-});
-
-app.MapGet("/pantry", (IPantryService pantry, CancellationToken ct) => pantry.GetAllAsync(ct));
-
-app.MapPost("/pantry", async (AddPantryItemRequest request, IPantryService pantry, CancellationToken ct) =>
-{
-    var added = await pantry.AddAsync(request, ct);
-    return Results.Created($"/pantry/{added.Id}", added);
-});
-
-app.MapGet("/debug/config", (IConfiguration config, IWebHostEnvironment env) => new
-{
-    Environment = env.EnvironmentName,
-    Greeting = config["PantryChef:Greeting"]
-});
-
-app.MapGet("/debug/options", (IOptions<RecipeOptions> opts) => new
-{
-    opts.Value.Model,
-    opts.Value.MaxSuggestions,
-    ApiKeyConfigured = !string.IsNullOrEmpty(opts.Value.ApiKey)
-});
-
-app.MapGet("debug/options-snapshot", (IOptionsSnapshot<RecipeOptions> opts) => new
-{
-    opts.Value.Model,
-    opts.Value.MaxSuggestions
-});
+app.MapPantryEndpoints();
 
 app.Run();
