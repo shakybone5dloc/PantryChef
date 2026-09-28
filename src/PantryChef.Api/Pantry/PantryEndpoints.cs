@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using PantryChef.Application.Pantry;
 
 namespace PantryChef.Api.Pantry;
 
@@ -10,28 +11,33 @@ public static class PantryEndpoints
 
         group.MapGet("/", GetAll);
         group.MapPost("/", Add);
-        group.MapPatch("/{id:int}", UpdateQuantity);
+        group.MapPatch("/{id:int}", SetQuantity);
+        group.MapPost("/{id:int}/use", Use);
         group.MapDelete("/{id:int}", Delete);
 
         return app;
     }
 
-    public static async Task<Ok<IReadOnlyList<PantryItemResponse>>> GetAll(
-        IPantryService pantry, CancellationToken ct) =>
-            TypedResults.Ok(await pantry.GetAllAsync(ct));
+    private static async Task<Ok<IReadOnlyList<PantryItemDto>>> GetAll(IPantryService pantry, CancellationToken ct) =>
+        TypedResults.Ok(await pantry.GetAllAsync(ct));
 
-    public static async Task<Created<PantryItemResponse>> Add(
+    private static async Task<Created<PantryItemDto>> Add(
         AddPantryItemRequest request, IPantryService pantry, CancellationToken ct)
     {
-        var added = await pantry.AddAsync(request, ct);
+        var added = await pantry.AddAsync(
+            new AddPantryItem(request.Ingredient, request.Quantity, request.Unit, request.ExpiresOn), ct);
         return TypedResults.Created($"/pantry/{added.Id}", added);
     }
 
-    private static async Task<Results<Ok<PantryItemResponse>, NotFound>> UpdateQuantity(
+    private static async Task<Results<Ok<PantryItemDto>, NotFound>> SetQuantity(
         int id, UpdateQuantityRequest request, IPantryService pantry, CancellationToken ct) =>
-        await pantry.UpdateQuantityAsync(id, request.Quantity, ct) is { } updated
-            ? TypedResults.Ok(updated)
-            : TypedResults.NotFound();
+        await pantry.SetQuantityAsync(id, request.Quantity, ct) is { } item
+            ? TypedResults.Ok(item) : TypedResults.NotFound();
+
+    private static async Task<Results<Ok<PantryItemDto>, NotFound>> Use(
+        int id, UseItemRequest request, IPantryService pantry, CancellationToken ct) =>
+        await pantry.UseAsync(id, request.Amount, ct) is { } item
+            ? TypedResults.Ok(item) : TypedResults.NotFound();
 
     private static async Task<Results<NoContent, NotFound>> Delete(
         int id, IPantryService pantry, CancellationToken ct) =>

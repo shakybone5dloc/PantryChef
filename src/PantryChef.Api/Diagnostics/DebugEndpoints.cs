@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using PantryChef.Api.Data;
+using PantryChef.Infrastructure.Data;
 using PantryChef.Api.Recipes;
 
 namespace PantryChef.Api.Diagnostics;
 
-public static class DebigEndpoints
+public static class DebugEndpoints
 {
     public static IEndpointRouteBuilder MapDebugEndpoints(this IEndpointRouteBuilder app)
     {
@@ -34,7 +34,7 @@ public static class DebigEndpoints
         {
             var item = await db.PantryItems.SingleAsync(p => p.Id == id);
             var before = db.Entry(item).State.ToString();
-            item.Quantity += 1;
+            item.SetQuantity(item.Quantity + 1);
             db.ChangeTracker.DetectChanges();
             return new { before, after = db.Entry(item).State.ToString(), tracker = db.ChangeTracker.DebugView.LongView };
         });
@@ -59,8 +59,8 @@ public static class DebigEndpoints
             return new { before, after, poolthreads = ThreadPool.ThreadCount };
         });
 
-        debug.MapGet("/wait-async", async () => { await Task.Delay(1000); return "done"; });
-        debug.MapGet("/wait-blocking", () => { ThreadSleep(1000); return "done"; });
+        //debug.MapGet("/wait-async", async () => { await Task.Delay(1000); return "done"; });
+        //debug.MapGet("/wait-blocking", () => { ThreadSleep(1000); return "done"; });
 
         debug.MapGet("/slow", async (CancellationToken ct, ILoggerFactory lf) =>
         {

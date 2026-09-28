@@ -5,14 +5,14 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using PantryChef.Api.Data;
+using PantryChef.Infrastructure.Data;
 
 #nullable disable
 
-namespace PantryChef.Api.Migrations
+namespace PantryChef.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(PantryDbContext))]
-    [Migration("20260926222707_InitialCreate")]
+    [Migration("20260928192612_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,7 +25,7 @@ namespace PantryChef.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("PantryChef.Api.Data.Ingredient", b =>
+            modelBuilder.Entity("PantryChef.Domain.Pantry.Ingredient", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -46,7 +46,7 @@ namespace PantryChef.Api.Migrations
                     b.ToTable("Ingredients");
                 });
 
-            modelBuilder.Entity("PantryChef.Api.Data.PantryItem", b =>
+            modelBuilder.Entity("PantryChef.Domain.Pantry.PantryItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -79,9 +79,9 @@ namespace PantryChef.Api.Migrations
                     b.ToTable("PantryItems");
                 });
 
-            modelBuilder.Entity("PantryChef.Api.Data.PantryItem", b =>
+            modelBuilder.Entity("PantryChef.Domain.Pantry.PantryItem", b =>
                 {
-                    b.HasOne("PantryChef.Api.Data.Ingredient", "Ingredient")
+                    b.HasOne("PantryChef.Domain.Pantry.Ingredient", "Ingredient")
                         .WithMany("PantryItems")
                         .HasForeignKey("IngredientId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -90,7 +90,7 @@ namespace PantryChef.Api.Migrations
                     b.Navigation("Ingredient");
                 });
 
-            modelBuilder.Entity("PantryChef.Api.Data.Ingredient", b =>
+            modelBuilder.Entity("PantryChef.Domain.Pantry.Ingredient", b =>
                 {
                     b.Navigation("PantryItems");
                 });

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace PantryChef.Api.Data;
+namespace PantryChef.Api.Errors;
 
 public sealed class DatabaseExceptionHandler(
     IProblemDetailsService problemDetails,
@@ -12,7 +12,7 @@ public sealed class DatabaseExceptionHandler(
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken ct)
     {
         if (exception is not DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg })
-            return false;
+            return false;   // not ours, so the next handler (or the default 500) takes it
 
         logger.LogWarning("Unique constraint violated: {Constraint}", pg.ConstraintName);
 

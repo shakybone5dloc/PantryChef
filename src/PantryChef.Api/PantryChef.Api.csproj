@@ -13,8 +13,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.17.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PantryChef.Application\PantryChef.Application.csproj" />
+    <ProjectReference Include="..\PantryChef.Infrastructure\PantryChef.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

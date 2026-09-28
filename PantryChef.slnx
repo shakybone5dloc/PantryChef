@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/PantryChef.Api/PantryChef.Api.csproj" />
+    <Project Path="src/PantryChef.Application/PantryChef.Application.csproj" />
+    <Project Path="src/PantryChef.Domain/PantryChef.Domain.csproj" />
+    <Project Path="src/PantryChef.Infrastructure/PantryChef.Infrastructure.csproj" />
   </Folder>
 </Solution>
