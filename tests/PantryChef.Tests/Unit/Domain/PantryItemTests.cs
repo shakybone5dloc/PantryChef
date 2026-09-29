@@ -9,7 +9,11 @@ public class PantryItemTests
     private static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
 
     private static PantryItem NewItem(decimal quantity = 12, DateOnly? expiresOn = null) =>
-        new(new Ingredient("eggs"), quantity, "count", expiresOn, Now);
+        new("user-1", new Ingredient("eggs"), quantity, "count", expiresOn, Now);
+
+    [Fact]
+    public void Constructor_BlankOwner_Throws() =>
+        Assert.Throws<ArgumentException>(() => new PantryItem(" ", new Ingredient("eggs"), 1, "count", null, Now));
 
     [Fact]
     public void Consume_ReducesQuantity()

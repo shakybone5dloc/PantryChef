@@ -2,6 +2,7 @@ using PantryChef.Api.Diagnostics;
 using PantryChef.Api.Errors;
 using PantryChef.Api.Pantry;
 using PantryChef.Api.Recipes;
+using PantryChef.Api.Auth;
 using PantryChef.Application;
 using PantryChef.Infrastructure;
 using Scalar.AspNetCore;
@@ -18,6 +19,7 @@ builder.Services.AddExceptionHandler<RecipeGenerationExceptionHandler>();
 
 // ---------- Layers ----------
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddJwtAuth(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 // ---------- Lesson demos ----------
@@ -49,6 +51,10 @@ if (app.Environment.IsDevelopment())
 app.MapGet("/", () => "PantryChef is running");
 app.MapPantryEndpoints();
 app.MapRecipeEndpoints();
+app.MapAuthEndpoints();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();
 

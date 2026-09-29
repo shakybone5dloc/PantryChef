@@ -11,14 +11,17 @@ public class PantryItem
     public string Unit { get; private set; } = null!;
     public DateOnly? ExpiresOn { get; private set; }
     public DateTimeOffset AddedAt { get; private set; }
+    public string OwnerId { get; private set; } = null!;
 
     private PantryItem() { }
 
-    public PantryItem(Ingredient ingredient, decimal quantity, string unit, DateOnly? expiresOn, DateTimeOffset addedAt)
+    public PantryItem(string ownerId, Ingredient ingredient, decimal quantity, string unit, DateOnly? expiresOn, DateTimeOffset addedAt)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerId);
         ArgumentNullException.ThrowIfNull(ingredient);
         ArgumentException.ThrowIfNullOrWhiteSpace(unit);
 
+        OwnerId = ownerId;
         Ingredient = ingredient;
         SetQuantity(quantity);
         Unit = unit.Trim().ToLowerInvariant();

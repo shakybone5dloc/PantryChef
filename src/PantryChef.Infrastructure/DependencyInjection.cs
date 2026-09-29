@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,7 @@ using PantryChef.Application.Abstractions;
 using PantryChef.Application.Recipes;
 using PantryChef.Infrastructure.AI;
 using PantryChef.Infrastructure.Data;
+using PantryChef.Infrastructure.Identity;
 
 namespace PantryChef.Infrastructure;
 
@@ -18,6 +20,14 @@ public static class DependencyInjection
         services.AddDbContext<PantryDbContext>(o => o.UseNpgsql(
             configuration.GetConnectionString("pantry")
                 ?? throw new InvalidOperationException("Connection string 'Pantry' is not configured.")));
+        services.AddIdentityCore<AppUser>(o =>
+        {
+            o.User.RequireUniqueEmail = true;
+            o.Password.RequiredLength = 8;
+            o.Lockout.MaxFailedAccessAttempts = 5;
+        })
+            .AddEntityFrameworkStores<PantryDbContext>()
+            .AddSignInManager();
         services.AddScoped<IPantryDbContext>(sp => sp.GetRequiredService<PantryDbContext>());
 
         // ----- AI -----

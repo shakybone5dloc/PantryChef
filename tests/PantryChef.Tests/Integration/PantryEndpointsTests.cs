@@ -37,7 +37,7 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory) : Integration
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PantryDbContext>();
         Assert.Equal(1, await db.Ingredients.CountAsync(Ct));
-        Assert.Equal(2, await db.PantryItems.CountAsync(Ct));
+        Assert.Equal(2, await db.PantryItems.IgnoreQueryFilters().CountAsync(Ct));
     }
 
     [Fact]

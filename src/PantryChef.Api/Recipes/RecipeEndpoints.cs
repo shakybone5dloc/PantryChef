@@ -12,7 +12,7 @@ public static class RecipeEndpoints
 {
     public static IEndpointRouteBuilder MapRecipeEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/recipes/suggest", Suggest).WithTags("Recipes");
+        app.MapPost("/recipes/suggest", Suggest).WithTags("Recipes").RequireAuthorization();
         return app;
     }
 

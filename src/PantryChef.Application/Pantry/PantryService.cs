@@ -13,7 +13,7 @@ public interface IPantryService
     Task<bool> DeleteAsync(int id, CancellationToken ct);
 }
 
-public sealed class PantryService(IPantryDbContext db, TimeProvider clock) : IPantryService
+public sealed class PantryService(IPantryDbContext db, TimeProvider clock, ICurrentUser currentUser) : IPantryService
 {
     public async Task<IReadOnlyList<PantryItemDto>> GetAllAsync(CancellationToken ct) =>
         await db.PantryItems
@@ -23,11 +23,12 @@ public sealed class PantryService(IPantryDbContext db, TimeProvider clock) : IPa
 
     public async Task<PantryItemDto> AddAsync(AddPantryItem command, CancellationToken ct)
     {
+        var ownerId = currentUser.UserId ?? throw new InvalidOperationException("No authenticated user.");
         var name = Ingredient.Normalize(command.Ingredient);
         var ingredient = await db.Ingredients.SingleOrDefaultAsync(i => i.Name == name, ct)
             ?? new Ingredient(name);
 
-        var item = new PantryItem(ingredient, command.Quantity, command.Unit, command.ExpiresOn, clock.GetUtcNow());
+        var item = new PantryItem(ownerId, ingredient, command.Quantity, command.Unit, command.ExpiresOn, clock.GetUtcNow());
         db.PantryItems.Add(item);
         await db.SaveChangesAsync(ct);
         return ToDto(item);

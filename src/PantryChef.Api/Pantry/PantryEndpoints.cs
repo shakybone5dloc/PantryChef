@@ -7,7 +7,7 @@ public static class PantryEndpoints
 {
     public static IEndpointRouteBuilder MapPantryEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/pantry").WithTags("Pantry");
+        var group = app.MapGroup("/pantry").WithTags("Pantry").RequireAuthorization();
 
         group.MapGet("/", GetAll);
         group.MapPost("/", Add);
