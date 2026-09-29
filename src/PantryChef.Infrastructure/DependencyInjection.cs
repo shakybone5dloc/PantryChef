@@ -56,6 +56,7 @@ public static class DependencyInjection
             var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient("ollama");
             return new OllamaApiClient(http, ai.Model);
         })
+            .UseOpenTelemetry(configure: c => c.EnableSensitiveData = ai.LogSensitiveData)
             .UseLogging();
 
         services.AddScoped<IRecipeGenerator, AiRecipeGenerator>();

@@ -42,6 +42,7 @@ public sealed class ExpiryDigestService(IPantryDbContext db, TimeProvider clock)
         }
 
         await db.SaveChangesAsync(ct);
+        PantryChefTelemetry.DigestNotifications.Add(created);
         return created;
     }
 }

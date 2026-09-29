@@ -5,11 +5,13 @@ using PantryChef.Api.Recipes;
 using PantryChef.Api.Auth;
 using PantryChef.Api.Background;
 using PantryChef.Api.Notifications;
+using PantryChef.Api.Observability;
 using PantryChef.Application;
 using PantryChef.Infrastructure;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddObservability();
 
 // ---------- API plumbing ----------
 builder.Services.AddOpenApi();
@@ -41,14 +43,6 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-app.Use(async (context, next) =>
-{
-    var sw = System.Diagnostics.Stopwatch.StartNew();
-    await next(context);
-    app.Logger.LogInformation("{Method} {Path} -> {Status} in {Ms} ms",
-        context.Request.Method, context.Request.Path, context.Response.StatusCode, sw.ElapsedMilliseconds);
-});
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -64,6 +58,7 @@ app.MapNotificationEndpoints();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseUserTagging();
 
 app.Run();
 

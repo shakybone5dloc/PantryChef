@@ -1,5 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Diagnostics;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Options;
+using PantryChef.Application;
 using PantryChef.Application.Notifications;
 
 namespace PantryChef.Api.Background;
@@ -17,7 +19,7 @@ public sealed class ExpiryDigestOptions
     public int DaysAhead { get; set; } = 2;
 }
 
-public sealed class ExpiryDigestWorker(
+public sealed partial class ExpiryDigestWorker(
     IServiceScopeFactory scopes,
     TimeProvider clock,
     IOptions<ExpiryDigestOptions> options,
@@ -44,6 +46,7 @@ public sealed class ExpiryDigestWorker(
 
     private async Task RunOnceAsync(int daysAhead, CancellationToken ct)
     {
+        using var activity = PantryChefTelemetry.ActivitySource.StartActivity("ExpiryDigest.Run");
         try
         {
             // A fresh scope per run, just like a request: a new DbContext each time
@@ -51,7 +54,8 @@ public sealed class ExpiryDigestWorker(
             var digest = scope.ServiceProvider.GetRequiredService<IExpiryDigestService>();
 
             var created = await digest.RunAsync(daysAhead, ct);
-            logger.LogInformation("Expiry digest created {Count} notification(s)", created);
+            activity?.SetTag("pantrychef.digest.created", created);
+            LogDigestCreated(logger, created);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -59,7 +63,11 @@ public sealed class ExpiryDigestWorker(
         }
         catch (Exception ex)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             logger.LogError(ex, "Expiry digest run failed; will try on the next tick");
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Expiry digest created {Count} notification(s)")]
+    private static partial void LogDigestCreated(ILogger logger, int count);
 }
