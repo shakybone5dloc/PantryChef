@@ -5,4 +5,7 @@
     <Project Path="src/PantryChef.Domain/PantryChef.Domain.csproj" />
     <Project Path="src/PantryChef.Infrastructure/PantryChef.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PantryChef.Tests/PantryChef.Tests.csproj" />
+  </Folder>
 </Solution>

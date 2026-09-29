@@ -51,3 +51,5 @@ app.MapPantryEndpoints();
 app.MapRecipeEndpoints();
 
 app.Run();
+
+public partial class Program;
