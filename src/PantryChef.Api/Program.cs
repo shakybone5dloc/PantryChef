@@ -3,6 +3,8 @@ using PantryChef.Api.Errors;
 using PantryChef.Api.Pantry;
 using PantryChef.Api.Recipes;
 using PantryChef.Api.Auth;
+using PantryChef.Api.Background;
+using PantryChef.Api.Notifications;
 using PantryChef.Application;
 using PantryChef.Infrastructure;
 using Scalar.AspNetCore;
@@ -27,6 +29,12 @@ builder.Services.AddSingleton<SingletonOp>();
 builder.Services.AddScoped<ScopedOp>();
 builder.Services.AddTransient<TransientOp>();
 builder.Services.AddTransient<LifetimeReporter>();
+// ---------- Background work ----------
+builder.Services.AddOptions<ExpiryDigestOptions>()
+    .Bind(builder.Configuration.GetSection(ExpiryDigestOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddHostedService<ExpiryDigestWorker>();
 
 var app = builder.Build();
 
@@ -52,6 +60,7 @@ app.MapGet("/", () => "PantryChef is running");
 app.MapPantryEndpoints();
 app.MapRecipeEndpoints();
 app.MapAuthEndpoints();
+app.MapNotificationEndpoints();
 
 app.UseAuthentication();
 app.UseAuthorization();

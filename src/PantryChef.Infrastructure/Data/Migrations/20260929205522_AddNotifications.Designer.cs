@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PantryChef.Infrastructure.Data;
@@ -11,9 +12,11 @@ using PantryChef.Infrastructure.Data;
 namespace PantryChef.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(PantryDbContext))]
-    partial class PantryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260929205522_AddNotifications")]
+    partial class AddNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

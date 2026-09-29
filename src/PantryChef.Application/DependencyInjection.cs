@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using PantryChef.Application.Notifications;
 using PantryChef.Application.Pantry;
 using PantryChef.Application.Recipes;
 
@@ -10,6 +11,8 @@ public static class DependencyInjection
     {
         services.AddScoped<IPantryService, PantryService>();
         services.AddScoped<IRecipeService, RecipeService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IExpiryDigestService, ExpiryDigestService>();
         return services;
     }
 }

@@ -29,6 +29,7 @@ public sealed class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Pantry", _postgres.GetConnectionString());
         builder.UseSetting("Jwt:SigningKey", "integration-tests-signing-key-at-least-32-characters-long");
+        builder.UseSetting("ExpiryDigest:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
         {
@@ -54,7 +55,7 @@ public sealed class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLif
 
         using var scope = Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<PantryDbContext>().Database
-            .ExecuteSqlRawAsync("""TRUNCATE "PantryItems", "Ingredients", "AspNetUsers" RESTART IDENTITY CASCADE;""");
+            .ExecuteSqlRawAsync("""TRUNCATE "Notifications", "PantryItems", "Ingredients", "AspNetUsers" RESTART IDENTITY CASCADE;""");
     }
 
     public override async ValueTask DisposeAsync()
