@@ -14,4 +14,8 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PantryChef.Contracts\PantryChef.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

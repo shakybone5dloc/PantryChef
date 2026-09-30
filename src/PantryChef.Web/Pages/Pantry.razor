@@ -71,7 +71,7 @@ else
 }
 
 @code {
-    private List<PantryItem>? items;
+    private List<PantryItemDto>? items;
     private AddItemForm form = new();
     private string? error;
     private bool busy;
@@ -84,9 +84,9 @@ else
         if (error is null) form = new();
     });
 
-    private Task UseOneAsync(PantryItem item) => RunAsync(async () => error = await Api.UseAsync(item.Id, 1));
+    private Task UseOneAsync(PantryItemDto item) => RunAsync(async () => error = await Api.UseAsync(item.Id, 1));
 
-    private Task DeleteAsync(PantryItem item) => RunAsync(async () => error = await Api.DeleteAsync(item.Id));
+    private Task DeleteAsync(PantryItemDto item) => RunAsync(async () => error = await Api.DeleteAsync(item.Id));
 
     // One place for busy state, reloading, and "API is down" handling
     private async Task RunAsync(Func<Task> action)
@@ -107,6 +107,6 @@ else
         }
     }
 
-    private static string RowClass(PantryItem item) =>
+    private static string RowClass(PantryItemDto item) =>
         item.ExpiresOn is { } d && d <= DateOnly.FromDateTime(DateTime.Today.AddDays(3)) ? "table-warning" : "";
 }

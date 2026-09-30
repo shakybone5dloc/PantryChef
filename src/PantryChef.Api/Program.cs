@@ -9,6 +9,7 @@ using PantryChef.Api.Notifications;
 using PantryChef.Api.Observability;
 using PantryChef.Application;
 using PantryChef.Infrastructure;
+using PantryChef.Contracts;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +44,8 @@ builder.Services.AddCors(o => o.AddPolicy("web", p => p
     .WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [])
     .AllowAnyHeader()
     .AllowAnyMethod()));
+builder.Services.AddContractsValidation();
+builder.Services.AddValidation();
 
 var app = builder.Build();
 

@@ -18,7 +18,11 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddTransient<AuthHeaderHandler>();
-builder.Services.AddHttpClient<PantryApiClient>(c => c.BaseAddress = new Uri(apiBase))
+builder.Services.AddHttpClient<PantryApiClient>(c =>
+{
+    c.BaseAddress = new Uri(apiBase);
+    c.Timeout = TimeSpan.FromMinutes(3);
+})
     .AddHttpMessageHandler<AuthHeaderHandler>();
 
 await builder.Build().RunAsync();

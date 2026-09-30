@@ -3,8 +3,6 @@
 namespace PantryChef.Web.Models;
 
 // What the API returns
-public record PantryItem(int Id, string Ingredient, decimal Quantity, string Unit, DateOnly? ExpiresOn);
-public record AccessToken(string Token, DateTimeOffset ExpiresAt);
 public record ProblemDetailsDto(string? Title, string? Detail, Dictionary<string, string[]>? Errors);
 
 // Form models: mutable classes, because forms bind to settable properties

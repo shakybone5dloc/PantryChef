@@ -4,16 +4,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using PantryChef.Infrastructure.Identity;
+using PantryChef.Contracts;
 
 namespace PantryChef.Api.Auth;
-
-public record RegisterRequest(
-    [Required, EmailAddress, StringLength(256)] string Email,
-    [Required, StringLength(100, MinimumLength = 8)] string Password);
-
-public record LoginRequest([Required] string Email, [Required] string Password);
-
-public record MeResponse(string Id, string Email);
 
 public static class AuthEndpoints
 {

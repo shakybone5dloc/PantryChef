@@ -1,12 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http.HttpResults;
 using PantryChef.Application.Recipes;
+using PantryChef.Contracts;
 
 namespace PantryChef.Api.Recipes;
-
-public record SuggestRecipesRequest(
-    [Range(1, 5)] int Count = 3,
-    [StringLength(200)] string? Preferences = null);
 
 public static class RecipeEndpoints
 {

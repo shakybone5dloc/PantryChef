@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using PantryChef.Application.Recipes;
 using System.ComponentModel;
+using PantryChef.Contracts;
 
 namespace PantryChef.Infrastructure.AI;
 

@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using PantryChef.Application.Pantry;
+using PantryChef.Contracts;
 using Xunit;
 
 namespace PantryChef.Tests.Integration;

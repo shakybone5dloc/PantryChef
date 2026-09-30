@@ -3,6 +3,7 @@ using OllamaSharp;
 using PantryChef.Application.Recipes;
 using PantryChef.Infrastructure.AI;
 using PantryChef.Tests.Fakes;
+using PantryChef.Contracts;
 using Xunit;
 
 namespace PantryChef.Tests.Unit.AI;

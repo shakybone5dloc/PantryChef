@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using PantryChef.Application.Notifications;
+using PantryChef.Contracts;
 using Xunit;
 
 namespace PantryChef.Tests.Integration;

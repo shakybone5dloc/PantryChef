@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PantryChef.Domain\PantryChef.Domain.csproj" />
+    <ProjectReference Include="..\PantryChef.Contracts\PantryChef.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
