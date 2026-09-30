@@ -1,9 +1,13 @@
 <Solution>
+  <Folder Name="/perf/">
+    <File Path="pantry.js" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/PantryChef.Api/PantryChef.Api.csproj" />
     <Project Path="src/PantryChef.Application/PantryChef.Application.csproj" />
     <Project Path="src/PantryChef.Domain/PantryChef.Domain.csproj" />
     <Project Path="src/PantryChef.Infrastructure/PantryChef.Infrastructure.csproj" />
+    <Project Path="src/PantryChef.Web/PantryChef.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PantryChef.Tests/PantryChef.Tests.csproj" />
