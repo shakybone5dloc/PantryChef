@@ -96,9 +96,10 @@ jobs:
 
       - name: Run database migrations (must succeed before the app updates)
         run: |
-          EXEC=$(az containerapp job start -g "$RG" -n pantrychef-migrate \
-            --image "$REGISTRY/pantrychef-migrator:$TAG" --container-name pantrychef-migrate \
-            --query name -o tsv)
+          # Point the job at the new image (keeps its env vars and secrets), then run it as-is
+          az containerapp job update -g "$RG" -n pantrychef-migrate \
+            --image "$REGISTRY/pantrychef-migrator:$TAG" --only-show-errors > /dev/null
+          EXEC=$(az containerapp job start -g "$RG" -n pantrychef-migrate --query name -o tsv)
           echo "Started $EXEC"
           for i in $(seq 1 60); do
             STATUS=$(az containerapp job execution show -g "$RG" -n pantrychef-migrate \
