@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v5
         with:
@@ -47,7 +47,7 @@ jobs:
       PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
       REGISTRY: ${{ vars.ACR_NAME }}.azurecr.io
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Azure login (OIDC, no stored password)
         if: env.PUSH == 'true'
