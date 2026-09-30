@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PantryChef.Application.Abstractions;
+using PantryChef.Contracts;
 
 namespace PantryChef.Application.Notifications;
-
-public record NotificationDto(int Id, DateOnly ForDate, string Message, DateTimeOffset CreatedAt, bool IsRead);
 
 public interface INotificationService
 {

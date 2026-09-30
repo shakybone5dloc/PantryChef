@@ -1,0 +1,112 @@
+﻿@page "/"
+@attribute [Authorize]
+@inject PantryApiClient Api
+
+<PageTitle>Pantry · PantryChef</PageTitle>
+
+<h1 class="mb-4">My pantry</h1>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<EditForm Model="form" OnValidSubmit="AddAsync" class="row g-2 align-items-end mb-4">
+    <DataAnnotationsValidator />
+    <div class="col-md-4">
+        <label class="form-label">Ingredient</label>
+        <InputText @bind-Value="form.Ingredient" class="form-control" />
+        <ValidationMessage For="() => form.Ingredient" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Quantity</label>
+        <InputNumber @bind-Value="form.Quantity" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Unit</label>
+        <InputText @bind-Value="form.Unit" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Expires</label>
+        <InputDate @bind-Value="form.ExpiresOn" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100" disabled="@busy">Add</button>
+    </div>
+</EditForm>
+
+@if (items is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (items.Count == 0)
+{
+    <p>Your pantry is empty. Add something above.</p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Ingredient</th><th>Quantity</th><th>Expires</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var item in items)
+            {
+                <tr class="@RowClass(item)">
+                    <td>@item.Ingredient</td>
+                    <td>@item.Quantity.ToString("0.##") @item.Unit</td>
+                    <td>@(item.ExpiresOn?.ToString("MMM d") ?? "-")</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary me-1"
+                            disabled="@(busy || item.Quantity < 1)"
+                            @onclick="() => UseOneAsync(item)">Use 1</button>
+                        <button class="btn btn-sm btn-outline-danger"
+                            disabled="@busy"
+                            @onclick="() => DeleteAsync(item)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<PantryItemDto>? items;
+    private AddItemForm form = new();
+    private string? error;
+    private bool busy;
+
+    protected override async Task OnInitializedAsync() => await RunAsync(() => Task.CompletedTask);
+
+    private Task AddAsync() => RunAsync(async () =>
+    {
+        error = await Api.AddAsync(form);
+        if (error is null) form = new();
+    });
+
+    private Task UseOneAsync(PantryItemDto item) => RunAsync(async () => error = await Api.UseAsync(item.Id, 1));
+
+    private Task DeleteAsync(PantryItemDto item) => RunAsync(async () => error = await Api.DeleteAsync(item.Id));
+
+    // One place for busy state, reloading, and "API is down" handling
+    private async Task RunAsync(Func<Task> action)
+    {
+        busy = true;
+        try
+        {
+            await action();
+            items = await Api.GetPantryAsync();
+        }
+        catch (HttpRequestException)
+        {
+            error = "Can't reach the API. Is it running?";
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private static string RowClass(PantryItemDto item) =>
+        item.ExpiresOn is { } d && d <= DateOnly.FromDateTime(DateTime.Today.AddDays(3)) ? "table-warning" : "";
+}

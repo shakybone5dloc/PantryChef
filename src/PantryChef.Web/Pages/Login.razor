@@ -1,0 +1,86 @@
+﻿@page "/login"
+@inject PantryApiClient Api
+@inject JwtAuthStateProvider Auth
+@inject NavigationManager Nav
+
+<PageTitle>Sign in · PantryChef</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <h1 class="mb-4">@(registering ? "Create account" : "Sign in")</h1>
+
+            @if (error is not null)
+            {
+            <div class="alert alert-danger">@error</div>
+        }
+
+        <EditForm Model="form" OnValidSubmit="SubmitAsync">
+            <DataAnnotationsValidator />
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <InputText @bind-Value="form.Email" class="form-control" />
+                <ValidationMessage For="() => form.Email" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <InputText type="password" @bind-Value="form.Password" class="form-control" />
+                <ValidationMessage For="() => form.Password" />
+            </div>
+            <button class="btn btn-primary" disabled="@busy">@(registering ? "Create account" : "Sign in")</button>
+            <button type="button" class="btn btn-link" @onclick="ToggleMode">
+                @(registering ? "I already have an account" : "Create an account")
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+
+@code {
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private LoginForm form = new();
+    private bool registering;
+    private bool busy;
+    private string? error;
+
+    private void ToggleMode()
+    {
+        registering = !registering;
+        error = null;
+    }
+
+    private async Task SubmitAsync()
+    {
+        busy = true;
+        error = null;
+        try
+        {
+            if (registering)
+            {
+                error = await Api.RegisterAsync(form.Email, form.Password);
+                if (error is not null) return;
+            }
+
+            var token = await Api.LoginAsync(form.Email, form.Password);
+            if (token is null)
+            {
+                error = "Invalid email or password.";
+                return;
+            }
+
+            await Auth.SignInAsync(token.Token);
+
+            // Only follow LOCAL return URLs, which prevents an "open direct" to another site
+            var target = ReturnUrl is { } u && u.StartsWith('/') && !u.StartsWith("//") ? u : "/";
+            Nav.NavigateTo(target);
+        }
+        catch (HttpRequestException)
+        {
+            error = "Can't reach the API. Is it running?";
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using PantryChef.Infrastructure.Identity;
+using PantryChef.Contracts;
 
 namespace PantryChef.Api.Auth;
 
@@ -16,8 +17,6 @@ public sealed class JwtOptions
     [Required, MinLength(32)] public string SigningKey { get; set; } = "";
     [Range(1, 1440)] public int ExpiresMinutes { get; set; } = 60;
 }
-
-public record AccessToken(string Token, DateTimeOffset ExpiresAt);
 
 public sealed class TokenService(IOptions<JwtOptions> options, TimeProvider clock)
 {

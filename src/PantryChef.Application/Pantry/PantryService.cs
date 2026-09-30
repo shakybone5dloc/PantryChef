@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using PantryChef.Application.Abstractions;
 using PantryChef.Domain.Pantry;
+using PantryChef.Contracts;
 
 namespace PantryChef.Application.Pantry;
 

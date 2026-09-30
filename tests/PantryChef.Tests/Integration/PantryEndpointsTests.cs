@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PantryChef.Application.Pantry;
 using PantryChef.Domain.Pantry;
 using PantryChef.Infrastructure.Data;
+using PantryChef.Contracts;
 using Xunit;
 
 namespace PantryChef.Tests.Integration;

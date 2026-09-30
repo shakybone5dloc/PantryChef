@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using PantryChef.Application.Abstractions;
 using PantryChef.Domain;
+using PantryChef.Contracts;
 
 namespace PantryChef.Application.Recipes;
 

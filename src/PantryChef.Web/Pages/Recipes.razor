@@ -1,0 +1,162 @@
+﻿@page "/recipes"
+@attribute [Authorize]
+@implements IDisposable
+@inject PantryApiClient Api
+
+<PageTitle>Recipes · PantryChef</PageTitle>
+
+<h1 class="mb-4">Recipe ideas</h1>
+
+<div class="row g-2 align-items-end mb-4">
+    <div class="col-md-6">
+        <label class="form-label">Preferences (optional)</label>
+        <input class="form-control" @bind="preferences" maxlength="200" diabled="@loading"
+            placeholder="quick weeknight dinner, vegetarian..." />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">How many</label>
+        <select class="form-select" @bind="count" disabled="@loading">
+            @for (var i = 1; i <= 5; i++)
+            {
+                <option value="@i">@i</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4">
+        @if (loading)
+        {
+            <button class="btn btn-outline-secondary w-100" @onclick="Cancel">Cancel</button>
+        }
+        else
+        {
+            <button class="btn btn-primary w-100" @onclick="SuggestAsync">Suggest recipes</button>
+        }
+    </div>
+</div>
+
+@if (loading)
+{
+    <div class="d-flex align-items-center gap-2 text-muted mb-3">
+        <div class="spinner-border spinner-border-sm" role="status"></div>
+        <span>Thinking about what you can cook... (@elapsed s)</span>
+    </div>
+}
+
+@if (message is not null)
+{
+    <div class="alert @messageClass">@message</div>
+}
+
+<div class="row row-cols-1 row-cols-lg-2 g-4">
+    @foreach (var recipe in recipes)
+    {
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">@recipe.Title</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@recipe.TotalMinutes min</h6>
+                    <p class="card-text">@recipe.Summary</p>
+
+                    <h6>Ingredients</h6>
+                    <ul>
+                        @foreach (var ingredient in recipe.Ingredients)
+                        {
+                            <li>@ingredient.Amount @ingredient.Name</li>
+                        }
+                    </ul>
+
+                    @if (!(recipe.MissingIngredients.Count > 0))
+                    {
+                        <p><strong>You'll need:</strong> @string.Join(", ", recipe.MissingIngredients)</p>
+                    }
+
+                    <h6>Steps</h6>
+                    <ol>
+                        @foreach (var step in recipe.Steps)
+                        {
+                            <li>@step</li>
+                        }
+                    </ol>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string? preferences;
+    private int count = 2;
+    private bool loading;
+    private int elapsed;
+    private string? message;
+    private string messageClass = "alert-info";
+    private List<RecipeSuggestion> recipes = [];
+    private CancellationTokenSource? cts;
+
+    private async Task SuggestAsync()
+    {
+        cts = new CancellationTokenSource();
+        using var ticker = new CancellationTokenSource();
+
+        loading = true;
+        message = null;
+        recipes = [];
+        elapsed = 0;
+        _ = TicketAsync(ticker.Token);  // fire-and-forget: updates the elapsed counter every second
+
+        try
+        {
+            recipes = await Api.SuggestRecipesAsync(new SuggestRecipesRequest(count, preferences), cts.Token);
+            if (recipes.Count == 0)
+                Show("The AI didn't return any recipes. Try again.", "alert-warning");
+        }
+        catch (OperationCanceledException)
+        {
+            Show("Cancelled.", "alert-secondary");
+        }
+        catch (ApiException ex) when (ex.StatusCode == 503)
+        {
+            Show($"{ex.Message} Your pantry still works; try recipes again later.", "alert-warning");
+        }
+        catch (ApiException ex)
+        {
+            Show(ex.Message, "alert-danger");
+        }
+        catch (HttpRequestException)
+        {
+            Show("Can't reach the API. Is it running?", "alert-danger");
+        }
+        finally
+        {
+            ticker.Cancel();
+            loading = false;
+            cts.Dispose();
+            cts = null;
+        }
+    }
+
+    private async Task TicketAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                elapsed++;
+                StateHasChanged();  // this runs outside an event handler, so ask Blazon to re-render
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private void Cancel() => cts?.Cancel();
+
+    private void Show(string text, string css)
+    {
+        message = text;
+        messageClass = css;
+    }
+
+    // Navigating away cancels the request, so the server doesn't keep generating for nobody
+    public void Dispose() => cts?.Cancel();
+}

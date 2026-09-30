@@ -9,6 +9,7 @@ using PantryChef.Api.Notifications;
 using PantryChef.Api.Observability;
 using PantryChef.Application;
 using PantryChef.Infrastructure;
+using PantryChef.Contracts;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +40,12 @@ builder.Services.AddOptions<ExpiryDigestOptions>()
     .ValidateOnStart();
 builder.Services.AddHostedService<ExpiryDigestWorker>();
 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
+builder.Services.AddCors(o => o.AddPolicy("web", p => p
+    .WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [])
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+builder.Services.AddContractsValidation();
+builder.Services.AddValidation();
 
 var app = builder.Build();
 
@@ -62,6 +69,7 @@ app.MapNotificationEndpoints();
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready") });
 
+app.UseCors("web");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseUserTagging();

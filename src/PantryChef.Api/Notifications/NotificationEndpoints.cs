@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using PantryChef.Application.Notifications;
+using PantryChef.Contracts;
 
 namespace PantryChef.Api.Notifications;
 
