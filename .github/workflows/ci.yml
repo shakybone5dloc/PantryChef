@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read     # least privilege: this workflow only reads the code
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Test (unit + integration via Testcontainers)
+        run: dotnet test --no-build -c Release
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: build-and-test          # only build images if the tests passed
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build API image
+        run: docker build --target runtime -t pantrychef-api:${{ github.sha }} .
+
+      - name: Build migrator image
+        run: docker build --target migrator -t pantrychef-migrator:${{ github.sha }} .
