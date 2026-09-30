@@ -68,5 +68,16 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory) : Integration
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task GetAll_ReflectsWritesImmediately_CacheIsInvalidated()
+    {
+        await Client.PostAsJsonAsync("/pantry", new { Ingredient = "eggs", quantity = 12, unit = "count" }, Ct);
+        Assert.Single((await Client.GetFromJsonAsync<List<PantryItemDto>>("/pantry", Ct))!);
+
+        await Client.PostAsJsonAsync("/pantry", new { ingredient = "rice", quantity = 2, unit = "lb" }, Ct);
+
+        Assert.Equal(2, (await Client.GetFromJsonAsync<List<PantryItemDto>>("/pantry", Ct))!.Count);
+    }
 }
 
