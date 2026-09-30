@@ -38,11 +38,14 @@ builder.Services.AddOptions<ExpiryDigestOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 builder.Services.AddHostedService<ExpiryDigestWorker>();
+builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+
+app.UseResponseCompression();
 
 if (app.Environment.IsDevelopment())
 {

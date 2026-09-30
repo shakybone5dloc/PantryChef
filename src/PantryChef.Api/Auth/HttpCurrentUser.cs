@@ -6,5 +6,19 @@ namespace PantryChef.Api.Auth;
 
 public sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 {
-    public string? UserId => accessor.HttpContext?.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+    private bool _resolved;
+    private string? _userId;
+
+    public string? UserId
+    {
+        get
+        {
+            if (!_resolved)
+            {
+                _userId = accessor.HttpContext?.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+                _resolved = true;
+            }
+            return _userId;
+        }
+    }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Caching.Hybrid;
 using OllamaSharp;
 using PantryChef.Application.Abstractions;
 using PantryChef.Application.Recipes;
@@ -65,6 +66,15 @@ public static class DependencyInjection
         services.AddHealthChecks()
             .AddDbContextCheck<PantryDbContext>("database", tags: ["ready"])
             .AddCheck<OllamaHealthCheck>("ollama", failureStatus: HealthStatus.Degraded, tags: ["ready"]);
+
+        services.AddHybridCache(o =>
+        {
+            o.DefaultEntryOptions = new HybridCacheEntryOptions
+            {
+                Expiration = TimeSpan.FromMinutes(5),
+                LocalCacheExpiration = TimeSpan.FromMinutes(5)
+            };
+        });
 
         return services;
     }
