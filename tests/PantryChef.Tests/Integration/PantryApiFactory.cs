@@ -17,9 +17,7 @@ public sealed class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLif
 {
     public static readonly DateTimeOffset StartTime = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:17")
-        .Build();
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17").Build();
 
     public FakeChatClient Chat { get; } = new();
     public FakeTimeProvider Clock { get; } = new(StartTime);
