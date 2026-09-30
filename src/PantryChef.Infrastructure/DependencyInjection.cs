@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OllamaSharp;
 using PantryChef.Application.Abstractions;
 using PantryChef.Application.Recipes;
@@ -60,6 +61,10 @@ public static class DependencyInjection
             .UseLogging();
 
         services.AddScoped<IRecipeGenerator, AiRecipeGenerator>();
+
+        services.AddHealthChecks()
+            .AddDbContextCheck<PantryDbContext>("database", tags: ["ready"])
+            .AddCheck<OllamaHealthCheck>("ollama", failureStatus: HealthStatus.Degraded, tags: ["ready"]);
 
         return services;
     }

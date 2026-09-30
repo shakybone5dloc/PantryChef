@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: pantrychef
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pantrychef"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama-models:/root/.ollama
+    deploy:                      # remove this block if you don't have an NVIDIA GPU
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    environment:
+      ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "18888:18888"
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    environment:
+      ConnectionStrings__Pantry: Host=db;Database=pantrychef;Username=postgres;Password=${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      target: runtime
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Pantry: Host=db;Database=pantrychef;Username=postgres;Password=${POSTGRES_PASSWORD}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
+      Ai__Endpoint: http://ollama:11434
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://dashboard:18889
+    ports:
+      - "8080:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      ollama:
+        condition: service_started
+
+volumes:
+  db-data:
+  ollama-models:
+    external: true    # reuse the volume from Module 5, so the model isn't downloaded again

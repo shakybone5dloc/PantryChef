@@ -22,7 +22,7 @@ public static class ObservabilitySetup
         var otel = builder.Services.AddOpenTelemetry()
             .ConfigureResource(r => r.AddService("pantrychef-api"))
             .WithTracing(t => t
-                .AddAspNetCoreInstrumentation()
+                .AddAspNetCoreInstrumentation(o => o.Filter = ctx => !ctx.Request.Path.StartsWithSegments("/health"))
                 .AddHttpClientInstrumentation()
                 .AddSource("Npgsql")
                 .AddSource("*Microsoft.Extensions.AI")

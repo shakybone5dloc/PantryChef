@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using PantryChef.Api.Diagnostics;
 using PantryChef.Api.Errors;
 using PantryChef.Api.Pantry;
@@ -55,6 +56,8 @@ app.MapPantryEndpoints();
 app.MapRecipeEndpoints();
 app.MapAuthEndpoints();
 app.MapNotificationEndpoints();
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready") });
 
 app.UseAuthentication();
 app.UseAuthorization();
