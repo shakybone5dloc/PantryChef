@@ -38,13 +38,86 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
-    needs: build-and-test          # only build images if the tests passed
+    needs: build-and-test
     timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write            # allows requesting an OIDC token from GitHub
+    env:
+      PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      REGISTRY: ${{ vars.ACR_NAME }}.azurecr.io
     steps:
       - uses: actions/checkout@v5
 
-      - name: Build API image
-        run: docker build --target runtime -t pantrychef-api:${{ github.sha }} .
+      - name: Azure login (OIDC, no stored password)
+        if: env.PUSH == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Build migrator image
-        run: docker build --target migrator -t pantrychef-migrator:${{ github.sha }} .
+      - name: Log in to the registry
+        if: env.PUSH == 'true'
+        run: az acr login --name ${{ vars.ACR_NAME }}
+
+      - name: Build images
+        run: |
+          docker build --target runtime  -t $REGISTRY/pantrychef-api:${{ github.sha }} .
+          docker build --target migrator -t $REGISTRY/pantrychef-migrator:${{ github.sha }} .
+
+      - name: Push images
+        if: env.PUSH == 'true'
+        run: |
+          docker push $REGISTRY/pantrychef-api:${{ github.sha }}
+          docker push $REGISTRY/pantrychef-migrator:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+      REGISTRY: ${{ vars.ACR_NAME }}.azurecr.io
+      TAG: ${{ github.sha }}
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Add the Container Apps CLI extension
+        run: az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Run database migrations (must succeed before the app updates)
+        run: |
+          EXEC=$(az containerapp job start -g "$RG" -n pantrychef-migrate \
+            --image "$REGISTRY/pantrychef-migrator:$TAG" --container-name pantrychef-migrate \
+            --query name -o tsv)
+          echo "Started $EXEC"
+          for i in $(seq 1 60); do
+            STATUS=$(az containerapp job execution show -g "$RG" -n pantrychef-migrate \
+              --job-execution-name "$EXEC" --query properties.status -o tsv)
+            echo "Migration status: $STATUS"
+            [ "$STATUS" = "Succeeded" ] && exit 0
+            [ "$STATUS" = "Failed" ] && exit 1
+            sleep 10
+          done
+          echo "Timed out waiting for migrations"; exit 1
+
+      - name: Deploy the new API image
+        run: az containerapp update -g "$RG" -n pantrychef-api --image "$REGISTRY/pantrychef-api:$TAG"
+
+      - name: Smoke test
+        run: |
+          FQDN=$(az containerapp show -g "$RG" -n pantrychef-api --query properties.configuration.ingress.fqdn -o tsv)
+          for i in $(seq 1 30); do
+            if curl -fsS "https://$FQDN/health/ready"; then echo; echo "Deployed and ready"; exit 0; fi
+            sleep 10
+          done
+          echo "App did not become ready"; exit 1
