@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using PantryChef.Contracts;
 using PantryChef.Web;
 using PantryChef.Web.Services;
 
@@ -16,6 +17,7 @@ builder.Services.AddSingleton<JwtAuthStateProvider>();
 builder.Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthStateProvider>());
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<NotificationState>();
 
 builder.Services.AddTransient<AuthHeaderHandler>();
 builder.Services.AddHttpClient<PantryApiClient>(c =>

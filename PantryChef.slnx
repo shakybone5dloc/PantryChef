@@ -12,5 +12,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PantryChef.Tests/PantryChef.Tests.csproj" />
+    <Project Path="tests/PantryChef.Web.Tests/PantryChef.Web.Tests.csproj" />
   </Folder>
 </Solution>
