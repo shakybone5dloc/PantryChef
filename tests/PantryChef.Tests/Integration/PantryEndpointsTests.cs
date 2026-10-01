@@ -57,7 +57,7 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory) : Integration
         var created = await (await Client.PostAsJsonAsync("/pantry", new { ingredient = "eggs", quantity = 3, unit = "count" }, Ct))
             .Content.ReadFromJsonAsync<PantryItemDto>(Ct);
 
-        var response = await Client.PostAsJsonAsync($"/pantry/{created.Id}/use", new { amount = 5 }, Ct);
+        var response = await Client.PostAsJsonAsync($"/pantry/{created!.Id}/use", new { amount = 5 }, Ct);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
     }

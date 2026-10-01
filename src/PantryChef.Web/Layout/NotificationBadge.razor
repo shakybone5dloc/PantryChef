@@ -1,0 +1,47 @@
+﻿@implements IDisposable
+@inject NotificationState State
+
+<a href="notifications" class="btn btn-sm btn-outline-primary me-3">
+    Notifications
+    @if (State.UnreadCount > 0)
+    {
+        <span class="badge round-pill bg-danger ms-1">@State.UnreadCount</span>
+    }
+</a>
+
+@code {
+    private readonly CancellationTokenSource _cts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.Changed += OnChanged;
+        await SafeRefreshAsync();
+        _ = PollAsync(_cts.Token);
+    }
+
+    private async Task PollAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
+            while (await timer.WaitForNextTickAsync(ct))
+                await SafeRefreshAsync();
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task SafeRefreshAsync()
+    {
+        try { await State.RefreshAsync(); }
+        catch (HttpRequestException) { }
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        State.Changed -= OnChanged;
+        _cts.Cancel();
+        _cts.Dispose();
+    }
+}

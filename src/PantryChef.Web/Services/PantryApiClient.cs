@@ -39,6 +39,12 @@ public sealed class PantryApiClient(HttpClient http)
         throw new ApiException(await ErrorOrNull(response) ?? "Request failed.", (int)response.StatusCode);
     }
 
+    public async Task<List<NotificationDto>> GetNotificationsAsync() =>
+        await http.GetFromJsonAsync<List<NotificationDto>>("/notifications") ?? [];
+
+    public async Task MarkNotificationReadAsync(int id) =>
+        (await http.PostAsync($"/notifications/{id}/read", null)).EnsureSuccessStatusCode();
+
     // Turns a ProblemDetails error response (Module 3) into one readable message, or null on success
     private static async Task<string?> ErrorOrNull(HttpResponseMessage response)
     {
